@@ -24,6 +24,7 @@ const Events = ({events}) => {
   useEffect(() => {
     const storedEmail = localStorage.getItem("email")
     if (storedEmail) setEmail(storedEmail)
+    console.log(events)
     setLoaded(true)  // ← mark as ready regardless
   }, [])
 
@@ -33,7 +34,8 @@ const Events = ({events}) => {
       const filter = events.filter(event => event.emailId === email)
       setFilteredEvents(filter)
     } else {
-      router.push("/")  // ← only redirect after we're sure there's no email
+      router.push("/")
+      console.log(filteredEvents)
     }
   }, [email, loaded])
   const handleDelete = async (id) => {

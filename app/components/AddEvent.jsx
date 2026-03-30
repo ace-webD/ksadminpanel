@@ -216,7 +216,6 @@ const AddEvent = () => {
             setShowErrorBox(false)
             if(error === "Added event successfully!" || error === "Something went wrong!"){
               router.push("/events")
-              router.refresh()
             }
           }}
           className="bg-red-500 text-white px-4 py-1 rounded-lg cursor-pointer"

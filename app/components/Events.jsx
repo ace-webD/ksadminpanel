@@ -42,7 +42,7 @@ const Events = ({events}) => {
     setLoading(true)
     try{  
       await deleteDoc(doc(db, "events", id))
-      router.refresh()
+      router.push("/events")
     }
     catch(err){
       setMessage("Something went wrong!")

@@ -1,13 +1,13 @@
 "use client"
 
 import { db } from "@/config/firebase"
-import { addDoc, collection, deleteDoc, doc } from "firebase/firestore"
+import { addDoc, collection, deleteDoc, doc, getDocs } from "firebase/firestore"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { use, useEffect, useState } from "react"
 import { FaSignOutAlt, FaTrash, FaPlusCircle } from "react-icons/fa"
 
-const Events = ({events}) => {
+const Events = () => {
   const [filteredEvents,setFilteredEvents] = useState([])
   const [email,setEmail] = useState("")
   const [message,setMessage] = useState("")
@@ -20,29 +20,44 @@ const Events = ({events}) => {
     router.push("/")
   }
   const [loaded, setLoaded] = useState(false)  // ← track if localStorage has been read
-
+  const fetchData = async () => {
+    try{
+      setLoading(true)
+      const querySnapshot = await getDocs(collection(db,"events"))
+      const events = querySnapshot.docs.map(doc => ({
+          id: doc.id, 
+          ...doc.data() 
+        }))
+      setFilteredEvents(events)
+    }
+    catch(err){
+      console.log(err)
+    }
+    finally{
+      setLoading(false)
+    } 
+  }
   useEffect(() => {
     const storedEmail = localStorage.getItem("email")
     if (storedEmail) setEmail(storedEmail)
-    console.log(events)
-    setLoaded(true)  // ← mark as ready regardless
+    fetchData()
+    setLoaded(true)
   }, [])
 
   useEffect(() => {
-    if (!loaded) return  // ← wait until localStorage has been checked
+    if (!loaded) return
     if (email) {
-      const filter = events.filter(event => event.emailId === email)
+      const filter = filteredEvents.filter(event => event.emailId === email)
       setFilteredEvents(filter)
     } else {
       router.push("/")
-      console.log(filteredEvents)
     }
   }, [email, loaded])
   const handleDelete = async (id) => {
     setLoading(true)
     try{  
       await deleteDoc(doc(db, "events", id))
-      router.push("/events")
+      fetchData()
     }
     catch(err){
       setMessage("Something went wrong!")

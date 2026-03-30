@@ -1,13 +1,18 @@
 "use client"
+import { db } from "@/config/firebase"
+import { collection, getDocs, query, where } from "firebase/firestore"
 import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import {FaEye, FaEyeSlash} from 'react-icons/fa'
+
 const LoginPage = () => {
   const router = useRouter()
   const [email,setEmail] = useState("")
   const [password,setPassword] = useState("")
   const [error,setError] = useState("")
   const [isEyeOpen,setIsEyeOpen] = useState(false)
+  const [loading,setLoading] = useState(false)
+
   const validateCredentials = () => {
     if(!email || email.trim() === ""){
       setError("Email field is mandatory!")
@@ -17,28 +22,40 @@ const LoginPage = () => {
       setError("Password field is mandatory!")
       return false
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,10}$/
-    if(!passwordRegex.test(password)){
-      setError("Invalid password [password must contain atleast one digit, one lowercase character, one uppercase character, one special character and the length of the password must be (6-10) characters only]!")
-      return false
-    }
-    if(!emailRegex.test(email)){
-      setError("Invalid Email ID!")
-      return false
-    }
     return true
   }
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
     if(!validateCredentials()) return
-    localStorage.setItem("email",email)
-    router.push(`/events`)
+    setLoading(true)
+    try {
+      const q = query(collection(db, "clubs"), where("email", "==", email))
+      const snapshot = await getDocs(q)
+      if(snapshot.empty){
+        setError("No account found with this email!")
+        setLoading(false)
+        return
+      }
+      const club = snapshot.docs[0].data()
+      if(club.password !== password){
+        setError("Incorrect password!")
+        setLoading(false)
+        return
+      }
+      localStorage.setItem("email", email)
+      router.push("/events")
+    } catch(err) {
+      setError("Something went wrong. Please try again!")
+    }
+    setLoading(false)
   }
+
   const handleEyeClick = () => {
     setIsEyeOpen(prev => !prev)
   }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
   <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-6 flex flex-col gap-6">
@@ -93,9 +110,10 @@ const LoginPage = () => {
         {/* Submit */}
         <button
           type="submit"
-          className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition cursor-pointer"
+          disabled={loading}
+          className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition cursor-pointer disabled:opacity-60"
         >
-          Login
+          {loading ? "Checking..." : "Login"}
         </button>
         {
           error &&

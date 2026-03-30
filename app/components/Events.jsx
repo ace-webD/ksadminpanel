@@ -9,7 +9,7 @@ import { FaSignOutAlt, FaTrash, FaPlusCircle } from "react-icons/fa"
 
 const Events = ({events}) => {
   const [filteredEvents,setFilteredEvents] = useState([])
-  const [email,setEmail] = useState(localStorage.getItem("email") || "")
+  const [email,setEmail] = useState("")
   const [message,setMessage] = useState("")
   const [deleteId,setDeleteId] = useState("")
   const [showErrorBox,setShowErrorBox] = useState(false)
@@ -19,17 +19,23 @@ const Events = ({events}) => {
     localStorage.clear()
     router.push("/")
   }
+  const [loaded, setLoaded] = useState(false)  // ← track if localStorage has been read
+
   useEffect(() => {
     const storedEmail = localStorage.getItem("email")
     if (storedEmail) setEmail(storedEmail)
-  },[])
+    setLoaded(true)  // ← mark as ready regardless
+  }, [])
+
   useEffect(() => {
+    if (!loaded) return  // ← wait until localStorage has been checked
     if (email) {
       const filter = events.filter(event => event.emailId === email)
       setFilteredEvents(filter)
+    } else {
+      router.push("/")  // ← only redirect after we're sure there's no email
     }
-    else router.push("/")
-  }, [email])
+  }, [email, loaded])
   const handleDelete = async (id) => {
     setLoading(true)
     try{  

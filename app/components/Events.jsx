@@ -9,6 +9,7 @@ import { FaSignOutAlt, FaTrash, FaPlusCircle } from "react-icons/fa"
 
 const Events = () => {
   const [filteredEvents,setFilteredEvents] = useState([])
+  const [allEvents,setAllEvents] = useState([])
   const [email,setEmail] = useState("")
   const [message,setMessage] = useState("")
   const [deleteId,setDeleteId] = useState("")
@@ -28,6 +29,7 @@ const Events = () => {
           id: doc.id, 
           ...doc.data() 
         }))
+      setAllEvents(events)
       setFilteredEvents(events)
     }
     catch(err){
@@ -47,17 +49,20 @@ const Events = () => {
   useEffect(() => {
     if (!loaded) return
     if (email) {
-      const filter = filteredEvents.filter(event => event.emailId === email)
+      const filter = allEvents.filter(event => event.emailId === email)
       setFilteredEvents(filter)
     } else {
       router.push("/")
     }
-  }, [email, loaded])
+  }, [email, loaded, allEvents])
   const handleDelete = async (id) => {
     setLoading(true)
     try{  
       await deleteDoc(doc(db, "events", id))
-      fetchData()
+      const newAllEvents = allEvents.filter(event => event.id != id)
+      setAllEvents(newAllEvents)
+      const newFiltered = filteredEvents.filter(event => event.emailId != email)
+      setFilteredEvents(newFiltered)
     }
     catch(err){
       setMessage("Something went wrong!")
